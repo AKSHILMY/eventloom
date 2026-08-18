@@ -1,0 +1,25 @@
+{
+  "name": "eventloom-example-react-dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Runnable example: React frontend consuming the Python eventloom dashboard example (python/eventloom/examples/dashboard_app.py) over SSE.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@akshilmy/eventloom-core": "^0.1.0",
+    "@akshilmy/eventloom-react": "^0.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

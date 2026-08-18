@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eventloom"
+version = "0.1.0"
+description = "A generalized, deterministic backend-to-frontend event streaming toolkit. Framework-agnostic core + first-class FastAPI adapter."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Akshil", email = "akshilmy.19@gmail.com" }]
+keywords = ["sse", "server-sent-events", "streaming", "fastapi", "pydantic", "events", "real-time"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Framework :: FastAPI",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+
+# Core dependencies only — no web framework here. Installing plain `eventloom`
+# must never pull in FastAPI (see adapters/__init__.py and plan section 3.1).
+dependencies = [
+  "pydantic>=2.0,<3",
+  "anyio>=4.0",
+]
+
+[project.optional-dependencies]
+fastapi = ["fastapi>=0.100"]
+test = [
+  "pytest>=7.0",
+  "pytest-asyncio>=0.23",
+  "httpx>=0.24",
+  "fastapi>=0.100",
+]
+
+[project.urls]
+Homepage = "https://github.com/akshilmy/eventloom"
+Documentation = "https://github.com/akshilmy/eventloom/blob/main/python/eventloom/README.md"
+Repository = "https://github.com/akshilmy/eventloom"
+Issues = "https://github.com/akshilmy/eventloom/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eventloom"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.hatch.metadata]
+allow-direct-references = true

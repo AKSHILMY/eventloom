@@ -1,0 +1,17 @@
+{
+  "name": "eventloom-typescript",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Monorepo for @akshilmy/eventloom-core and @akshilmy/eventloom-react",
+  "workspaces": ["packages/*", "examples/*"],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "tsup": "^8.3.5",
+    "vitest": "^2.1.8"
+  }
+}

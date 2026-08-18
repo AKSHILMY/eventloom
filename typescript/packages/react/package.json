@@ -1,0 +1,51 @@
+{
+  "name": "@akshilmy/eventloom-react",
+  "version": "0.1.0",
+  "description": "React adapter for eventloom: useEventStream hook, StreamView component, and a type-safe component registry.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["react", "sse", "server-sent-events", "streaming", "events", "real-time"],
+  "author": "Akshil",
+  "license": "MIT",
+  "homepage": "https://github.com/akshilmy/eventloom/tree/main/typescript/packages/react",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akshilmy/eventloom.git",
+    "directory": "typescript/packages/react"
+  },
+  "publishConfig": { "access": "public" },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "dependencies": {
+    "@akshilmy/eventloom-core": "^0.1.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "jsdom": "^25.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.6.3",
+    "tsup": "^8.3.5",
+    "vitest": "^2.1.8"
+  }
+}

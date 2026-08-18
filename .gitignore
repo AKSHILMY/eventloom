@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+dist/
+build/
+
+# TypeScript / Node
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+coverage/
+
+# Env / secrets — never commit real values; keep a checked-in `.env.example` instead
+.env
+.env.*
+!.env.example
+
+# Editors
+.vscode/
+.idea/
+
+# Misc
+.DS_Store
+*.log

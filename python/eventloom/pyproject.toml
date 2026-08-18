@@ -37,6 +37,16 @@ fastapi = ["fastapi>=0.100"]
 # Everything needed to run examples/dashboard_app.py: the FastAPI adapter,
 # a server to run it, and instructor for the LLM-driven event streams.
 examples = ["fastapi>=0.100", "uvicorn>=0.30", "instructor>=1.0"]
+# eventloom.contrib.pydantic_v1: partial-streaming from Pydantic v1 schemas
+# via direct OpenAI/Anthropic tool-calling (instructor doesn't support v1).
+# Zero effect on plain `pip install eventloom` — the core `_compat` shim that
+# lets StreamEnvelope/EventEmitter accept v1 payloads needs no dependencies
+# beyond pydantic itself (pydantic>=2 bundles the `pydantic.v1` namespace
+# this subpackage's models are built on); only importing
+# eventloom.contrib.pydantic_v1.providers.{openai,anthropic} needs these.
+pydantic-v1 = ["openai>=1.0", "anthropic>=0.34"]
+# Everything needed to run examples/dashboard_app_pydantic_v1.py.
+examples-pydantic-v1 = ["fastapi>=0.100", "uvicorn>=0.30", "openai>=1.0", "anthropic>=0.34"]
 test = [
   "pytest>=7.0",
   "pytest-asyncio>=0.23",

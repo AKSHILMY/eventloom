@@ -16,6 +16,7 @@ from typing import Any, AsyncIterator
 import anyio
 from pydantic import BaseModel
 
+from . import _compat
 from .envelope import STREAM_ERROR_TYPE, StreamEnvelope, StreamError
 from .registry import EventTypeRegistry
 
@@ -52,7 +53,9 @@ class EventEmitter:
         in a `StreamEnvelope`, and enqueue it for the adapter to send.
 
         `data` may be an instance of the registered schema, or a plain dict
-        (validated via the schema's `model_validate`). Raises
+        (validated via the schema's `model_validate` — or, for a schema
+        registered from `eventloom.contrib.pydantic_v1`, its v1 equivalent
+        `parse_obj`, via `_compat.validate`). Raises
         `eventloom.core.registry.UnknownEventTypeError` if `type_name` was
         never registered, or `pydantic.ValidationError` if `data` doesn't
         match the schema.
@@ -64,7 +67,7 @@ class EventEmitter:
         if isinstance(data, spec.schema):
             payload = data
         elif isinstance(data, dict):
-            payload = spec.schema.model_validate(data)
+            payload = _compat.validate(spec.schema, data)
         else:
             raise TypeError(
                 f"emit({type_name!r}, ...) expected a {spec.schema.__name__} instance or dict, "

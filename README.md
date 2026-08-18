@@ -8,7 +8,7 @@ Two independently-publishable packages implementing one frozen [wire protocol](#
 
 | Package | Registry | What it is |
 |---|---|---|
-| [`eventloom`](python/eventloom) | PyPI | Framework-agnostic core (envelope, registry, emitter) + first-class FastAPI adapter |
+| [`eventloom`](python/eventloom) | PyPI | Framework-agnostic core (envelope, registry, emitter) + first-class FastAPI adapter + optional Pydantic v1 payload support |
 | [`@akshilmy/eventloom-core`](typescript/packages/core) | npm | Framework-agnostic engine (SSE connection, merge/replace/append store, component registry) |
 | [`@akshilmy/eventloom-react`](typescript/packages/react) | npm | React adapter on top of `eventloom-core`: `useEventStream`, `<StreamView>`, typed registry |
 
@@ -84,6 +84,27 @@ metrics bar chart from a single non-streamed structured extraction (`replace`), 
 log interleaving progress lines from all three concurrent LLM calls (`append`) — all driven by one
 Python endpoint over one SSE connection.
 
+**An alternate backend, same frontend, no `instructor`.** `examples/dashboard_app_pydantic_v1.py`
+implements the identical dashboard on **Pydantic v1** models via `eventloom.contrib.pydantic_v1`
+(direct OpenAI/Anthropic tool-calling — `instructor` doesn't support Pydantic v1) instead of
+Pydantic v2 + `instructor`. Run it *instead of* `dashboard_app.py` (same port `8000`, same route —
+not both at once):
+
+```bash
+cd python/eventloom
+uv pip install -e ".[test,examples-pydantic-v1]" --python .venv/bin/python
+export OPENAI_API_KEY=sk-...
+.venv/bin/python examples/dashboard_app_pydantic_v1.py
+```
+
+and point the same, unmodified `typescript/examples/react-dashboard` at it — the four panels above
+render identically, since the wire protocol never depends on which Pydantic version produced the
+payload (that equivalence is what `eventloom.core._compat` is for). This backend also streams three
+*competitor* profiles concurrently under one shared event type (`company.competitor`), one `id` per
+competitor — N concurrent instances of a single event type, the pattern this module was ported out
+of production for. See [`python/eventloom/README.md`](python/eventloom/README.md#pydantic-v1-compatibility-eventloomcontribpydantic_v1)
+for the full API.
+
 ## Troubleshooting
 
 **The page loads but nothing ever renders, and the Network tab shows repeated failed/`500`
@@ -112,7 +133,8 @@ confirm the `EventStore` snapshot matches expectations for all three strategies.
 ## Test suites
 
 ```bash
-# Python: 24 tests (envelope, registry, emitter, FastAPI adapter, MockEmitter)
+# Python: 77 tests (envelope, registry, emitter, FastAPI adapter, MockEmitter, _compat,
+# and eventloom.contrib.pydantic_v1's partial builder / JSON repair / streaming helper / providers)
 cd python/eventloom && .venv/bin/pytest -v
 
 # TypeScript: 40 tests (core: envelope/registry/store/connection; react: hook/component)

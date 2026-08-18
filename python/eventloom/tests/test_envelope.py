@@ -89,3 +89,62 @@ def test_replace_and_append_strategies_include_all_fields_even_if_unset():
     )
     data = json.loads(envelope.to_json())["data"]
     assert data == {"name": "Ada", "bio": None}
+
+
+# --- Pydantic-v1-style payloads (eventloom.contrib.pydantic_v1) --------------
+# `StreamEnvelope` itself is always Pydantic v2 — only `data` varies here.
+
+
+def test_v1_payload_merge_strategy_excludes_unset_fields():
+    from pydantic.v1 import BaseModel as V1BaseModel
+
+    class V1UserProfile(V1BaseModel):
+        name: str | None = None
+        bio: str | None = None
+
+    first = StreamEnvelope(
+        type="user.partial", id="profile-1", seq=0, data=V1UserProfile(name="Ada Lovelace"), strategy="merge"
+    )
+    second = StreamEnvelope(
+        type="user.partial", id="profile-1", seq=1, data=V1UserProfile(bio="Mathematician"), strategy="merge", done=True
+    )
+
+    first_data = json.loads(first.to_json())["data"]
+    second_data = json.loads(second.to_json())["data"]
+
+    assert first_data == {"name": "Ada Lovelace"}
+    assert second_data == {"bio": "Mathematician"}
+
+
+def test_v1_payload_replace_strategy_includes_all_fields_even_if_unset():
+    from pydantic.v1 import BaseModel as V1BaseModel
+
+    class V1UserProfile(V1BaseModel):
+        name: str | None = None
+        bio: str | None = None
+
+    envelope = StreamEnvelope(
+        type="user.partial", id="profile-1", seq=0, data=V1UserProfile(name="Ada"), strategy="replace"
+    )
+    data = json.loads(envelope.to_json())["data"]
+    assert data == {"name": "Ada", "bio": None}
+
+
+def test_v1_payload_round_trips_wire_protocol_fields():
+    from pydantic.v1 import BaseModel as V1BaseModel
+
+    class V1ChartData(V1BaseModel):
+        labels: list[str]
+        values: list[float]
+
+    envelope = StreamEnvelope(
+        type="chart.data",
+        id="chart-1",
+        seq=0,
+        data=V1ChartData(labels=["Q1"], values=[1.0]),
+        strategy="replace",
+        done=True,
+    )
+    parsed = json.loads(envelope.to_json())
+    assert set(parsed.keys()) == {"type", "id", "seq", "data", "strategy", "done", "ts"}
+    assert parsed["data"] == {"labels": ["Q1"], "values": [1.0]}

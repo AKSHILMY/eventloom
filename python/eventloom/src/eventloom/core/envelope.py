@@ -15,6 +15,8 @@ from typing import Generic, Literal, TypeVar
 
 from pydantic import BaseModel, Field
 
+from . import _compat
+
 T = TypeVar("T")
 
 MergeStrategy = Literal["replace", "merge", "append"]
@@ -54,10 +56,13 @@ class StreamEnvelope(BaseModel, Generic[T]):
     def to_json(self) -> str:
         """JSON serialization of the envelope.
 
-        Targets Pydantic v2 (`.model_dump_json()`) only, per the project plan's
-        open decisions (section 7). Pydantic v1 support is a deferred, non-blocking
-        item — add a `_compat` shim exposing version-neutral helpers if/when a
-        real consumer needs v1, rather than building it speculatively now.
+        Targets Pydantic v2 (`.model_dump_json()`) for the envelope itself —
+        `StreamEnvelope` is always v2, that never changes. `data`, however,
+        may be a Pydantic-v1-style instance (from `eventloom.contrib.
+        pydantic_v1`, see its docstring): the `_compat.is_v1_style()` branch
+        below handles that case via version-neutral helpers, so v2's own
+        `model_dump_json()`/`model_dump()` — which can't serialize a foreign
+        non-v2 model sitting in an `Any`-typed field — is never asked to.
 
         For `strategy == "merge"`, `data` is dumped with `exclude_unset=True`
         so only the fields the emitter actually set are sent — otherwise
@@ -68,6 +73,10 @@ class StreamEnvelope(BaseModel, Generic[T]):
         object (it's meant to be the complete authoritative state), and
         `append` payloads are normally fully-specified items anyway.
         """
+        if _compat.is_v1_style(self.data):
+            payload = self.model_dump(mode="json", exclude={"data"})
+            payload["data"] = _compat.dump_json_safe(self.data, exclude_unset=(self.strategy == "merge"))
+            return json.dumps(payload, separators=(",", ":"))
         if self.strategy == "merge" and isinstance(self.data, BaseModel):
             payload = self.model_dump(mode="json", exclude={"data"})
             payload["data"] = self.data.model_dump(mode="json", exclude_unset=True)

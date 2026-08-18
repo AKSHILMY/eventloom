@@ -29,21 +29,24 @@ function StrategyBadge({ strategy }: { strategy: Strategy }) {
 
 // `area` places this panel in the named-area grid defined in index.css, so
 // layout stays fixed no matter which of the three concurrent LLM calls
-// happens to produce its first event first.
+// happens to produce its first event first. Panels with no fixed `area` (the
+// competitor cards — there are N of them, a dynamic count, so they can't each
+// get their own named area) instead span both columns and auto-flow into
+// their own row, one per card, after the named ones.
 function Panel({
   area,
   strategy,
   title,
   children,
 }: {
-  area: string;
+  area?: string;
   strategy: Strategy;
   title: string;
   children: ReactNode;
 }) {
   return (
     <section
-      style={{ gridArea: area }}
+      style={area ? { gridArea: area } : { gridColumn: "1 / -1" }}
       className={`rounded-xl border border-panel-line ${STRATEGY[strategy].border} border-l-4 bg-panel p-5`}
     >
       <header className="mb-4 flex items-center justify-between gap-3">
@@ -80,9 +83,11 @@ export interface CompanyProfile {
   key_products?: string[];
 }
 
-export function ProfileCard({ data, done }: EventComponentProps<CompanyProfile>) {
+// Shared between ProfileCard and CompetitorCard — both stream the same
+// field-by-field-`merge`d shape, just under different event types/ids.
+function ProfileFields({ data, done }: EventComponentProps<CompanyProfile>) {
   return (
-    <Panel area="profile" strategy="merge" title="Company profile">
+    <>
       <p className="text-lg font-semibold text-paper">
         <FieldValue value={data.name} placeholder="w-40" />
       </p>
@@ -111,6 +116,31 @@ export function ProfileCard({ data, done }: EventComponentProps<CompanyProfile>)
             ))}
       </div>
       {!done && <p className="mt-4 font-mono text-[11px] text-thread/80">streaming…</p>}
+    </>
+  );
+}
+
+export function ProfileCard(props: EventComponentProps<CompanyProfile>) {
+  return (
+    <Panel area="profile" strategy="merge" title="Company profile">
+      <ProfileFields {...props} />
+    </Panel>
+  );
+}
+
+// --- company.competitor (merge, N concurrent instances) ----------------------
+//
+// Mirrors python/eventloom/examples/dashboard_app_pydantic_v1.py's
+// `_stream_one_competitor`: N independent LLM calls stream the *same* shape
+// as company.profile, each under its own `id` (`competitor-0`, `competitor-1`,
+// ...). `StreamView` already renders one component instance per event `id`
+// (see useEventStream's `EventStore.snapshot()`), so registering this one
+// renderer for the `company.competitor` type is all it takes for N concurrent
+// cards to appear — no per-instance wiring needed on the frontend.
+export function CompetitorCard(props: EventComponentProps<CompanyProfile>) {
+  return (
+    <Panel strategy="merge" title={`Competitor — ${props.id}`}>
+      <ProfileFields {...props} />
     </Panel>
   );
 }

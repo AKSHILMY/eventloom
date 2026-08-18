@@ -1,12 +1,15 @@
 import { createRegistry, StreamView } from "@akshilmy/eventloom-react";
-import { ActivityLog, ErrorFallback, InsightFeed, MetricsChart, ProfileCard } from "./components";
+import { ActivityLog, CompetitorCard, ErrorFallback, InsightFeed, MetricsChart, ProfileCard } from "./components";
 import type { CompanyProfile, Insight, LogLine, MetricsBreakdown } from "./components";
 
 const registry = createRegistry()
   .register<"company.profile", CompanyProfile>("company.profile", { renderer: ProfileCard, strategy: "merge" })
   .register<"company.insight", Insight[]>("company.insight", { renderer: InsightFeed, strategy: "append" })
   .register<"company.metrics", MetricsBreakdown>("company.metrics", { renderer: MetricsChart })
-  .register<"activity.log", LogLine[]>("activity.log", { renderer: ActivityLog, strategy: "append" });
+  .register<"activity.log", LogLine[]>("activity.log", { renderer: ActivityLog, strategy: "append" })
+  // Only emitted by dashboard_app_pydantic_v1.py (see its module docstring)
+  // — harmless no-op against dashboard_app.py, which never emits this type.
+  .register<"company.competitor", CompanyProfile>("company.competitor", { renderer: CompetitorCard, strategy: "merge" });
 
 // Cross-origin, direct to the backend — not proxied through Vite's dev
 // server. See dashboard_app.py's CORSMiddleware comment for why: a
@@ -77,6 +80,20 @@ export function App() {
             python examples/dashboard_app.py
           </code>{" "}
           (needs an LLM API key — see the file's docstring) before starting this app.
+        </p>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-mist">
+          Run{" "}
+          <code className="rounded bg-panel px-1.5 py-0.5 font-mono text-[13px] text-paper">
+            python examples/dashboard_app_pydantic_v1.py
+          </code>{" "}
+          instead (same port, same route — not both at once) to see the identical four panels above rendered from{" "}
+          <code className="rounded bg-panel px-1.5 py-0.5 font-mono text-[13px] text-paper">
+            eventloom.contrib.pydantic_v1
+          </code>{" "}
+          (Pydantic v1 models, no <code className="rounded bg-panel px-1.5 py-0.5 font-mono text-[13px] text-paper">instructor</code>)
+          — this page needs zero changes either way, since the wire protocol never depends on which Pydantic version
+          produced it. That backend also streams three <em>competitor</em> profiles concurrently under one shared
+          event type, each with its own id — the extra cards below the log.
         </p>
 
         <div className="dashboard-grid mt-8">

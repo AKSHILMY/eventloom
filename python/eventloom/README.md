@@ -23,11 +23,13 @@ any client that can parse JSON over SSE can consume it.
 ## Install
 
 ```bash
-pip install eventloom              # core only
-pip install "eventloom[fastapi]"   # + the FastAPI adapter
+pip install eventloom                 # core only
+pip install "eventloom[fastapi]"      # + the FastAPI adapter
+pip install "eventloom[pydantic-v1]"  # + partial-streaming from Pydantic v1 schemas
 ```
 
-Requires Python 3.10+ and Pydantic v2.
+Requires Python 3.10+ and Pydantic v2 (event *payloads* can still be Pydantic v1 — see
+[Pydantic v1 compatibility](#pydantic-v1-compatibility-eventloomcontribpydantic_v1) below).
 
 ## Quickstart
 
@@ -199,6 +201,65 @@ from eventloom.adapters.fastapi import to_sse_response, emitter_dependency
       ...
       return to_sse_response(emitter)
   ```
+
+## Pydantic v1 compatibility (`eventloom.contrib.pydantic_v1`)
+
+`eventloom.core` requires Pydantic v2 (`StreamEnvelope`/`EventEmitter` always are, and
+that never changes), but `StreamEnvelope.data` itself can be a **Pydantic-v1-style**
+payload — `eventloom.core._compat` duck-types across the split (v2's
+`.model_dump()`/`.model_validate()` vs. v1's `.dict()`/`.json()`/`.parse_obj()`), so a
+schema registered from a v1 model works with `EventTypeRegistry`/`EventEmitter` exactly
+like a v2 one, byte-identical on the wire.
+
+`eventloom.contrib.pydantic_v1` is what actually produces those v1 payloads: a
+partial-object-streaming toolkit for Pydantic v1 schemas, filling the gap left by
+[`instructor`](https://python.useinstructor.com/) (which only supports Pydantic v2). It
+works against a genuine standalone `pydantic<2` install, or — the common case, since
+`eventloom` itself requires `pydantic>=2,<3` — Pydantic v2's bundled `pydantic.v1` compat
+namespace; either way, models subclass `eventloom.contrib.pydantic_v1.BaseModel`.
+
+```bash
+pip install "eventloom[pydantic-v1]"   # pulls in openai + anthropic
+```
+
+```python
+from eventloom.contrib.pydantic_v1 import BaseModel, stream_new_list_items
+from eventloom.contrib.pydantic_v1.providers.openai import OpenAIStreamClient
+
+class Insight(BaseModel):
+    title: str
+    detail: str
+
+class InsightsBatch(BaseModel):
+    insights: list[Insight] = []
+
+client = OpenAIStreamClient()  # reads OPENAI_API_KEY from the environment
+
+# Field-by-field partial streaming of a single object (pairs with strategy="merge"):
+async for partial in client.stream(model="gpt-4o-mini", response_model=Insight, messages=[...]):
+    ...  # partial.title / partial.detail fill in progressively
+
+# Non-streaming, single validated result (mirrors instructor's `.create()`):
+insight = await client.create(model="gpt-4o-mini", response_model=Insight, messages=[...])
+
+# create_iterable()-equivalent for a growing list field (pairs with strategy="append"):
+async for item in stream_new_list_items(
+    client.stream(model="gpt-4o-mini", response_model=InsightsBatch, messages=[...]),
+    get_list=lambda batch: batch.insights,
+):
+    ...  # each Insight, exactly once, as soon as it's complete
+```
+
+`AnthropicStreamClient` (`eventloom.contrib.pydantic_v1.providers.anthropic`) is a
+drop-in alternative with the same interface. Every intermediate `.stream()` yield is a
+cheap, unvalidated partial (`Model.construct()`, no `ValidationError`s mid-stream); once
+the underlying token stream ends, one final, genuinely validated instance is appended
+automatically (`validate_final=True`, the default) — pass `validate_final=False` for the
+original, never-validates behavior. See
+[`examples/dashboard_app_pydantic_v1.py`](examples/dashboard_app_pydantic_v1.py) for a
+full FastAPI example — the same dashboard as `examples/dashboard_app.py`, rebuilt on this
+instead of `instructor`, plus a demonstration of N concurrent instances of one event type
+(distinct `id`s sharing a type).
 
 ## Testing your event-emitting code
 

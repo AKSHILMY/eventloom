@@ -81,3 +81,43 @@ async def test_context_manager_closes_emitter(registry):
 
     received = [e async for e in emitter.events()]
     assert len(received) == 1
+
+
+# --- Pydantic-v1-style schemas (eventloom.contrib.pydantic_v1) --------------
+
+
+async def test_emit_accepts_dict_against_v1_registered_schema():
+    from pydantic.v1 import BaseModel as V1BaseModel
+
+    from eventloom import EventTypeRegistry
+
+    class V1ChartData(V1BaseModel):
+        labels: list[str]
+        values: list[float]
+
+    v1_registry = EventTypeRegistry()
+    v1_registry.register("chart.data", V1ChartData, strategy="replace")
+
+    emitter = EventEmitter(v1_registry)
+    envelope = await emitter.emit("chart.data", {"labels": ["Q1"], "values": [1.0]}, id="chart-1")
+
+    assert isinstance(envelope.data, V1ChartData)
+    assert envelope.data.labels == ["Q1"]
+
+
+async def test_emit_rejects_dict_that_fails_v1_schema_validation():
+    from pydantic.v1 import BaseModel as V1BaseModel
+    from pydantic.v1 import ValidationError as V1ValidationError
+
+    from eventloom import EventTypeRegistry
+
+    class V1ChartData(V1BaseModel):
+        labels: list[str]
+        values: list[float]
+
+    v1_registry = EventTypeRegistry()
+    v1_registry.register("chart.data", V1ChartData, strategy="replace")
+
+    emitter = EventEmitter(v1_registry)
+    with pytest.raises(V1ValidationError):
+        await emitter.emit("chart.data", {"labels": "not-a-list"}, id="chart-1")

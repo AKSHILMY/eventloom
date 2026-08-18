@@ -23,10 +23,10 @@
   "keywords": ["sse", "server-sent-events", "streaming", "events", "real-time"],
   "author": "Akshil",
   "license": "MIT",
-  "homepage": "https://github.com/akshilmy/eventloom/tree/main/typescript/packages/core",
+  "homepage": "https://github.com/AKSHILMY/eventloom/tree/main/typescript/packages/core",
   "repository": {
     "type": "git",
-    "url": "https://github.com/akshilmy/eventloom.git",
+    "url": "https://github.com/AKSHILMY/eventloom.git",
     "directory": "typescript/packages/core"
   },
   "publishConfig": { "access": "public" },

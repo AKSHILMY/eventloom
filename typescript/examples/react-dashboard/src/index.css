@@ -1,0 +1,99 @@
+/* Must precede the Tailwind import: `@import "tailwindcss"` expands to real
+   rules in place, and CSS requires all @import statements to come first. */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap");
+@import "tailwindcss";
+
+/* Design tokens. Named per role, not per shade — see the palette note in
+   App.tsx for why `thread`/`weft`/`warp` map onto merge/append/replace. */
+@theme {
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #0d1117; /* page background */
+  --color-panel: #161b22; /* card surface */
+  --color-panel-line: #262c36; /* borders/dividers */
+  --color-paper: #e6e8eb; /* primary text */
+  --color-mist: #7d8590; /* secondary/muted text */
+
+  --color-thread: #e3a008; /* merge — a single strand, filled in over time */
+  --color-weft: #2dd4bf; /* append — the thread woven back and forth, pass by pass */
+  --color-warp: #a78bfa; /* replace — the fixed threads set once, before weaving starts */
+
+  --color-positive: #4ade80;
+  --color-risk: #f87171;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+}
+
+/* Each event-driven panel occupies a named cell so the layout stays fixed
+   regardless of which of the three concurrent LLM calls happens to update
+   first — see the `gridArea` prop on <Panel> in components.tsx. */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "profile"
+    "metrics"
+    "insights"
+    "log";
+  gap: 1.5rem;
+  /* Each panel sizes to its own content — without this, grid stretches
+     every cell in a row to match the row's tallest item, and Metrics (a
+     short chart) ends up with a large empty gap to match Profile's height
+     (a name, a bio paragraph, and a row of product chips). */
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-grid {
+    /* 3:2 rather than an even split — Profile carries a full bio paragraph
+       and wrapping product chips, Metrics is just a short bar chart, so an
+       even split left Profile's column too narrow and its chips cramped. */
+    grid-template-columns: 3fr 2fr;
+    grid-template-areas:
+      "profile metrics"
+      "insights insights"
+      "log log";
+  }
+}
+
+/* Plays once on mount — since new profile fields, insight cards, and log
+   lines are each a genuinely new DOM node (keyed by field name / index),
+   this fires exactly when a piece of a schema first appears on screen. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise {
+  animation: rise 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Bars are only ever inserted once fully resolved (`replace` sends the
+   complete object), so a mount-triggered grow-in via @starting-style reads
+   as "the result arriving," not a fake progressive fill. */
+.bar-grow {
+  transition: height 700ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  @starting-style {
+    height: 0px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .bar-grow {
+    animation: none;
+    transition: none;
+  }
+}

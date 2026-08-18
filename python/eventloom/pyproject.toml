@@ -34,6 +34,9 @@ dependencies = [
 
 [project.optional-dependencies]
 fastapi = ["fastapi>=0.100"]
+# Everything needed to run examples/dashboard_app.py: the FastAPI adapter,
+# a server to run it, and instructor for the LLM-driven event streams.
+examples = ["fastapi>=0.100", "uvicorn>=0.30", "instructor>=1.0"]
 test = [
   "pytest>=7.0",
   "pytest-asyncio>=0.23",

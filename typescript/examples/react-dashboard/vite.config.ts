@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
 // No dev-server proxy: the app talks to the Python backend
 // (python/eventloom/examples/dashboard_app.py, :8000) directly, cross-origin,
@@ -11,5 +12,5 @@ import react from "@vitejs/plugin-react";
 // class of problem entirely, and `StreamConnection` doesn't send credentials
 // by default anyway, so no cookies cross the boundary either way.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
 });

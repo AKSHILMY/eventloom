@@ -53,12 +53,18 @@ failure mode this avoids — this was caught by running the example end-to-end, 
 
 ## Run the full stack locally
 
+`examples/dashboard_app.py` fires three concurrent LLM calls (via
+[`instructor`](https://python.useinstructor.com/)) to research a fictional startup, so you'll need
+an API key for whichever provider you use — defaults to OpenAI.
+
 ```bash
 # 1. Python backend (terminal 1)
 cd python/eventloom
 uv venv --python 3.12 .venv
-uv pip install -e ".[test,fastapi]" --python .venv/bin/python
-uv pip install uvicorn --python .venv/bin/python
+uv pip install -e ".[test,examples]" --python .venv/bin/python
+export OPENAI_API_KEY=sk-...   # or set EVENTLOOM_LLM_MODEL to another instructor-supported
+                                # provider string (e.g. "anthropic/claude-haiku-4-5-latest")
+                                # and export that provider's key instead
 .venv/bin/python examples/dashboard_app.py   # serves http://localhost:8000/stream/dashboard
 
 # 2. React frontend (terminal 2)
@@ -71,9 +77,12 @@ npm run dev   # http://localhost:5173, calls http://localhost:8000 directly (COR
 ```
 
 Open `http://localhost:5173` (not `:8000` — that's the raw backend, only meaningful via `curl`
-or as a fetch target) — you'll see a bar chart (`replace` strategy), a profile card filling in
-field-by-field (`merge` strategy), and a scrolling activity log (`append` strategy), all driven by
-one Python endpoint emitting three different event types.
+or as a fetch target) — you'll see four panels update concurrently: a profile card filling in
+field-by-field as `instructor.create_partial()` streams it (`merge`), an insight feed appending
+each fully-formed item as it's generated (`append`, via `instructor`'s `Iterable[Model]` mode), a
+metrics bar chart from a single non-streamed structured extraction (`replace`), and an activity
+log interleaving progress lines from all three concurrent LLM calls (`append`) — all driven by one
+Python endpoint over one SSE connection.
 
 ## Troubleshooting
 

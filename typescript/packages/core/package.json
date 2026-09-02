@@ -1,6 +1,6 @@
 {
   "name": "@akshilmy/eventloom-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Framework-agnostic engine for eventloom: wire-protocol types, component registry, SSE connection handling, and event store merge logic.",
   "type": "module",
   "main": "./dist/index.cjs",

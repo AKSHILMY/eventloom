@@ -71,6 +71,17 @@ describe("EventStore", () => {
     expect(snap.find((e) => e.id === "b")?.type).toBe("log.line");
   });
 
+  it("append done=true sentinel sets done flag without adding an item", () => {
+    const store = new EventStore();
+    store.apply(envelope({ id: "ins", seq: 0, data: { title: "Growth" }, strategy: "append", done: false }));
+    store.apply(envelope({ id: "ins", seq: 1, data: { title: "Risk" }, strategy: "append", done: false }));
+    // done=true sentinel emitted by stream_items — must not append an extra element
+    store.apply(envelope({ id: "ins", seq: 2, data: {}, strategy: "append", done: true }));
+
+    expect(store.get("ins")?.data).toEqual([{ title: "Growth" }, { title: "Risk" }]);
+    expect(store.get("ins")?.done).toBe(true);
+  });
+
   it("clear() empties the store", () => {
     const store = new EventStore();
     store.apply(envelope({ id: "a" }));

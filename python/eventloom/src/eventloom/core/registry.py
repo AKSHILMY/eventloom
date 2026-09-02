@@ -15,6 +15,7 @@ from typing import Type
 from pydantic import BaseModel
 
 from .envelope import MergeStrategy
+from . import schema_utils as _su
 
 
 class UnknownEventTypeError(KeyError):
@@ -79,6 +80,53 @@ class EventTypeRegistry:
             return self._specs[type_name]
         except KeyError:
             raise UnknownEventTypeError(type_name) from None
+
+    def register_model(
+        self,
+        prefix: str,
+        schema: Type[BaseModel],
+    ) -> None:
+        """Auto-register event types derived from a Pydantic model schema.
+
+        Inspects *schema*'s fields and registers:
+
+        * ``prefix`` with ``strategy="merge"`` — receives scalar and nested
+          model fields as partial deltas.
+        * ``"{prefix}.{field_name}"`` with ``strategy="append"`` for each
+          list field whose item type is itself a Pydantic model — receives
+          one event per completed item.
+
+        List fields with primitive item types (``list[str]``, ``list[int]``,
+        …) are *not* given a separate event type; they are included in the
+        parent ``merge`` stream as atomic scalar values.
+
+        This is designed for use with :class:`eventloom.core.ModelEmitter`,
+        which automatically emits the correct events during partial streaming::
+
+            registry = EventTypeRegistry()
+            registry.register_model("profile", UserProfile)
+
+            async with ModelEmitter(emitter, "profile", id="u-1") as me:
+                async for partial in instructor.create_partial(UserProfile, ...):
+                    await me.emit_partial(partial)
+
+        Parameters
+        ----------
+        prefix:
+            The event-type name for the root merge stream (e.g.
+            ``"company.profile"``).  Must not already be registered with a
+            *different* schema or strategy (duplicate-idempotent otherwise).
+        schema:
+            A Pydantic ``BaseModel`` subclass (v1 or v2).
+        """
+        # Register the parent merge event for all scalar / non-list fields.
+        self.register(prefix, schema, strategy="merge")
+
+        # Register separate append events for list fields with model item types.
+        # Uses get_list_field_item_types() which is immune to ForwardRef issues
+        # caused by ``from __future__ import annotations`` in v1 model files.
+        for field_name, item_type in _su.get_list_field_item_types(schema).items():
+            self.register(f"{prefix}.{field_name}", item_type, strategy="append")
 
     def __contains__(self, type_name: str) -> bool:
         return type_name in self._specs

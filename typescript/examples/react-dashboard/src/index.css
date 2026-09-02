@@ -29,6 +29,38 @@ body {
   font-family: var(--font-sans);
 }
 
+/* ── Unified comparison layout ───────────────────────────────────────────────
+   Outer 2×2 grid: one cell per mode (manual-v1, manual-v2, auto-v1, auto-v2).
+   Each cell contains its own .dashboard-grid (the inner mini-dashboard).
+   CSS grid-template-areas are scoped to their container, so the four inner
+   grids never interfere with each other.                                    */
+.modes-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1280px) {
+  .modes-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.mode-panel {
+  border: 1px solid var(--color-panel-line);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  background: var(--color-panel);
+}
+
+.mode-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--color-panel-line);
+  padding-bottom: 0.75rem;
+}
+
 /* Each event-driven panel occupies a named cell so the layout stays fixed
    regardless of which of the three concurrent LLM calls happens to update
    first — see the `gridArea` prop on <Panel> in components.tsx. */
@@ -95,5 +127,45 @@ body {
   .bar-grow {
     animation: none;
     transition: none;
+  }
+}
+
+/* ── Evaluation page layout ──────────────────────────────────────────────────
+   Named-area grid:
+     "score" — ScoreGaugeRenderer (full width on mobile, left col on desktop)
+     "grid"  — SectionsFeed       (left col)
+     "log"   — ActivityLog        (right col)
+   StreamView renders all three; CSS areas control placement.               */
+.eval-page-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "score"
+    "grid"
+    "log";
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .eval-page-grid {
+    grid-template-columns: 2fr 1fr;
+    grid-template-areas:
+      "score log"
+      "grid  log";
+  }
+}
+
+/* Sections within the evaluation grid: 1→2 columns */
+.eval-sections-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 640px) {
+  .eval-sections-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }

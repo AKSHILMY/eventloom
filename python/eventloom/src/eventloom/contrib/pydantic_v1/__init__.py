@@ -41,6 +41,7 @@ so existing code written for instructor's Partial[Model] keeps working.
 from ._pydantic1 import BaseModel
 from .errors import PartialStreamValidationError
 from .partial import build_partial_model
+from .stream import stream_items, stream_model
 from .streaming import stream_new_list_items
 
 
@@ -60,5 +61,7 @@ __all__ = [
     "Partial",
     "PartialStreamValidationError",
     "build_partial_model",
+    "stream_items",
+    "stream_model",
     "stream_new_list_items",
 ]

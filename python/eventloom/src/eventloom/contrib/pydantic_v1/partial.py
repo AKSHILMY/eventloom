@@ -46,9 +46,24 @@ def _is_base_model_type(tp: Any) -> bool:
 def _build_sequence(inner_type: Any, raw_val: Any) -> list:
     """Recursively build each element of a list/set/tuple-shaped raw value.
     Always returns a list — callers apply shape-specific coercion (set/tuple)
-    on top, since construct()-based partials may not yet be hashable/complete."""
+    on top, since construct()-based partials may not yet be hashable/complete.
+
+    When the inner type is a BaseModel and an element is not yet a dict (e.g.
+    the streaming JSON parser returned a partial string for an incomplete nested
+    object), we substitute an empty ``construct()`` instance rather than passing
+    the raw string through.  The empty instance is safe for downstream
+    watermarking: ModelEmitter holds it as the *pending last* item until the
+    stream provides a proper dict in a later chunk, at which point the correct
+    model replaces it.
+    """
     if not isinstance(raw_val, list):
         return raw_val
+    if _is_base_model_type(inner_type):
+        return [
+            build_partial_model(inner_type, v) if isinstance(v, dict)
+            else inner_type.construct()  # placeholder for incomplete/partial element
+            for v in raw_val
+        ]
     return [build_partial_model(inner_type, v) if isinstance(v, dict) else v for v in raw_val]
 
 

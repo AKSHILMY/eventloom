@@ -19,6 +19,7 @@ from .core import (
     EventTypeSpec,
     JSONSerializer,
     MergeStrategy,
+    ModelEmitter,
     Serializer,
     StreamEnvelope,
     StreamError,
@@ -26,7 +27,7 @@ from .core import (
     default_serializer,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "STREAM_ERROR_TYPE",
@@ -37,6 +38,7 @@ __all__ = [
     "EventTypeSpec",
     "JSONSerializer",
     "MergeStrategy",
+    "ModelEmitter",
     "Serializer",
     "StreamEnvelope",
     "StreamError",

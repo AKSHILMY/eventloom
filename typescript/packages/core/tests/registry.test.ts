@@ -37,3 +37,68 @@ describe("ComponentRegistry", () => {
     expect(withOne.has("chart.data")).toBe(true);
   });
 });
+
+describe("ComponentRegistry.registerModel", () => {
+  it("registers the merge event for the prefix", () => {
+    const registry = new ComponentRegistry().registerModel("company.profile", {
+      renderer: "ProfileCard",
+    });
+    const config = registry.get("company.profile");
+    expect(config?.renderer).toBe("ProfileCard");
+    expect(config?.strategy).toBe("merge");
+  });
+
+  it("registers append events for each declared list field", () => {
+    const registry = new ComponentRegistry().registerModel("company.profile", {
+      renderer: "ProfileCard",
+      fields: {
+        key_products: { renderer: "KeyProductItem" },
+      },
+    });
+    const listConfig = registry.get("company.profile.key_products");
+    expect(listConfig?.renderer).toBe("KeyProductItem");
+    expect(listConfig?.strategy).toBe("append");
+  });
+
+  it("respects explicit strategy overrides on the parent event", () => {
+    const registry = new ComponentRegistry().registerModel("log.stream", {
+      renderer: "LogView",
+      strategy: "replace",
+    });
+    expect(registry.get("log.stream")?.strategy).toBe("replace");
+  });
+
+  it("respects explicit strategy overrides on list fields", () => {
+    const registry = new ComponentRegistry().registerModel("example", {
+      renderer: "ExampleView",
+      fields: {
+        items: { renderer: "ItemView", strategy: "replace" },
+      },
+    });
+    expect(registry.get("example.items")?.strategy).toBe("replace");
+  });
+
+  it("lists all registered types including list field subtypes", () => {
+    const registry = new ComponentRegistry().registerModel("company.profile", {
+      renderer: "ProfileCard",
+      fields: {
+        key_products: { renderer: "KeyProductItem" },
+        insights: { renderer: "InsightCard" },
+      },
+    });
+    expect(registry.types().sort()).toEqual([
+      "company.profile",
+      "company.profile.insights",
+      "company.profile.key_products",
+    ]);
+  });
+
+  it("registerModel is chainable with register()", () => {
+    const registry = new ComponentRegistry()
+      .registerModel("company.profile", { renderer: "ProfileCard" })
+      .register("activity.log", { renderer: "LogLine", strategy: "append" });
+
+    expect(registry.has("company.profile")).toBe(true);
+    expect(registry.has("activity.log")).toBe(true);
+  });
+});

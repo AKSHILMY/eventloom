@@ -7,6 +7,7 @@ integration lives in `eventloom.adapters.*`.
 
 from .emitter import EmitterClosedError, EventEmitter
 from .envelope import STREAM_ERROR_TYPE, MergeStrategy, StreamEnvelope, StreamError
+from .model_emitter import ModelEmitter
 from .registry import (
     DuplicateEventTypeError,
     EventTypeRegistry,
@@ -24,6 +25,7 @@ __all__ = [
     "EventTypeSpec",
     "JSONSerializer",
     "MergeStrategy",
+    "ModelEmitter",
     "Serializer",
     "StreamEnvelope",
     "StreamError",

@@ -121,7 +121,8 @@ class ProviderStreamClient(ABC):
             yield response_model.parse_obj(final_parsed)
         except ValidationError as exc:
             raise PartialStreamValidationError(
-                f"{response_model.__name__}: final object failed validation."
+                f"{response_model.__name__}: final object failed validation. "
+                f"Errors: {exc.errors()}"
             ) from exc
 
     async def create(

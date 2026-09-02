@@ -42,7 +42,10 @@ export class EventStore {
         next = { ...((existing?.data as Record<string, unknown>) ?? {}), ...(envelope.data as Record<string, unknown>) };
         break;
       case "append":
-        next = [...((existing?.data as unknown[]) ?? []), envelope.data];
+        // A done=true envelope is a completion sentinel, not a new item.
+        next = envelope.done
+          ? ((existing?.data as unknown[]) ?? [])
+          : [...((existing?.data as unknown[]) ?? []), envelope.data];
         break;
     }
 
